@@ -23,13 +23,14 @@ export async function POST(req: NextRequest) {
     );
   }
   const settings = parsed.data;
+  const hasSourceImage = Boolean(settings.sourceImage);
 
-  const safety = checkPromptSafety(settings.prompt);
+  const safety = checkPromptSafety(settings.prompt, { hasSourceImage });
   if (!safety.allowed) {
     return NextResponse.json({ error: safety.reason }, { status: 400 });
   }
   if (settings.negativePrompt) {
-    const negativeSafety = checkPromptSafety(settings.negativePrompt);
+    const negativeSafety = checkPromptSafety(settings.negativePrompt, { hasSourceImage });
     if (!negativeSafety.allowed) {
       return NextResponse.json({ error: negativeSafety.reason }, { status: 400 });
     }

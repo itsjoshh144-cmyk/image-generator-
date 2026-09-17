@@ -38,7 +38,12 @@ const EXPLOITATION_PATTERNS: RegExp[] = [
   /\b(sex|human) trafficking\b[\s\S]{0,40}\b(promot|advertis|recruit)/i,
 ];
 
-export function checkPromptSafety(prompt: string): SafetyCheckResult {
+interface SafetyCheckOptions {
+  /** True when this prompt is editing a real uploaded photo rather than generating from scratch. */
+  hasSourceImage?: boolean;
+}
+
+export function checkPromptSafety(prompt: string, options: SafetyCheckOptions = {}): SafetyCheckResult {
   const text = prompt.trim();
 
   if (!text) {
@@ -50,6 +55,17 @@ export function checkPromptSafety(prompt: string): SafetyCheckResult {
       allowed: false,
       reason:
         "This request appears to involve sexual content with minors, which is never allowed.",
+    };
+  }
+
+  // Undressing/sexualizing a real uploaded photo is non-consensual intimate
+  // imagery regardless of who the uploader claims the subject is — there's
+  // no fictional-framing exception here, unlike text-to-image generation.
+  if (options.hasSourceImage && SEXUAL_TERMS.test(text)) {
+    return {
+      allowed: false,
+      reason:
+        "Editing a real uploaded photo into nude or sexual content isn't supported.",
     };
   }
 
