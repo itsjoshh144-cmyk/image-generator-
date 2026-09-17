@@ -8,6 +8,9 @@ prompt enhancement, a full-screen gallery, and local history.
 
 - Large prompt box with character counter, example prompts, and an
   **Enhance Prompt** button that expands a short idea into a detailed prompt
+- **Upload an image to edit it**: attach a photo and describe the change
+  ("add a sunset sky", "make it a watercolor painting") instead of
+  generating from scratch
 - Aspect ratio, quality, image count (1-4), negative prompt, seed, and 9
   style presets (photorealistic, cinematic, anime, illustration, 3D,
   product photography, fashion, fantasy, cyberpunk)

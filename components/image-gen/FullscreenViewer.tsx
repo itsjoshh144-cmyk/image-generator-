@@ -56,6 +56,11 @@ export function FullscreenViewer({
               )}
 
               <div className="flex flex-wrap gap-1.5">
+                {item.record.settings.sourceImage && (
+                  <Badge variant="outline" className="border-fuchsia-400/30 text-fuchsia-300">
+                    Edited from photo
+                  </Badge>
+                )}
                 <Badge variant="outline" className="border-white/10 text-zinc-300">
                   {STYLE_PRESET_LABELS[item.record.settings.style]}
                 </Badge>

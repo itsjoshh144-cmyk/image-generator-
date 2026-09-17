@@ -104,6 +104,11 @@ export default function HomePage() {
           onEnhance={enhancePrompt}
           isGenerating={isGenerating}
           isEnhancing={isEnhancing}
+          sourceImage={settings.sourceImage}
+          onSourceImageChange={(sourceImage) => updateSettings({ sourceImage })}
+          onSourceImageError={(message) =>
+            toast({ variant: "error", title: "Couldn't add image", description: message })
+          }
         />
       </div>
 

@@ -50,6 +50,15 @@ function buildSvg(input: ProviderGenerateInput, seed: number, index: number): st
 
   const styleLabel = STYLE_PRESET_LABELS[input.style];
   const lines = wrapText(input.prompt, 34);
+  const label = input.sourceImage ? "EDITED (DEMO)" : "DEMO PREVIEW";
+
+  // In edit mode, composite the uploaded image behind a tinted overlay so
+  // the demo visibly "changes" the source without doing real pixel editing.
+  const backgroundLayer = input.sourceImage
+    ? `<image href="${escapeXml(input.sourceImage)}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice" />
+  <rect width="${width}" height="${height}" fill="hsl(${hue}, 70%, 35%)" opacity="0.55" />`
+    : `<rect width="${width}" height="${height}" fill="url(#g)" />
+  <rect width="${width}" height="${height}" fill="url(#glow)" />`;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
@@ -63,11 +72,10 @@ function buildSvg(input: ProviderGenerateInput, seed: number, index: number): st
       <stop offset="100%" stop-color="rgba(255,255,255,0)" />
     </radialGradient>
   </defs>
-  <rect width="${width}" height="${height}" fill="url(#g)" />
-  <rect width="${width}" height="${height}" fill="url(#glow)" />
+  ${backgroundLayer}
   <circle cx="${(seed * 13) % width}" cy="${(seed * 7) % height}" r="${Math.max(width, height) * 0.18}" fill="rgba(255,255,255,0.06)" />
   <circle cx="${width - ((seed * 11) % width)}" cy="${height - ((seed * 5) % height)}" r="${Math.max(width, height) * 0.12}" fill="rgba(0,0,0,0.12)" />
-  <text x="50%" y="${height / 2 - lines.length * 22}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="rgba(255,255,255,0.55)" letter-spacing="2">DEMO PREVIEW</text>
+  <text x="50%" y="${height / 2 - lines.length * 22}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="rgba(255,255,255,0.55)" letter-spacing="2">${label}</text>
   ${lines
     .map(
       (line, i) =>

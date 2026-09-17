@@ -16,8 +16,10 @@ export { ProviderError } from "./types";
  * this directory, then add one case below.
  */
 export function getImageProvider(): ImageProvider {
-  const explicit = process.env.IMAGE_PROVIDER?.toLowerCase();
-  const apiKey = process.env.IMAGE_API_KEY;
+  // Treat an empty string the same as "unset" — some hosts (e.g. Vercel's
+  // env var UI) store a blank value as "" rather than omitting the var.
+  const explicit = process.env.IMAGE_PROVIDER?.trim().toLowerCase() || undefined;
+  const apiKey = process.env.IMAGE_API_KEY?.trim() || undefined;
   const selected = explicit ?? (apiKey ? "openai" : "mock");
 
   switch (selected) {

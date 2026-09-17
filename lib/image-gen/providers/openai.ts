@@ -1,3 +1,4 @@
+import { parseImageDataUrl } from "@/lib/image-gen/data-url";
 import { buildProviderPrompt } from "./style-prompts";
 import { ProviderError, type ImageProvider, type ProviderGenerateInput, type ProviderGeneratedImage } from "./types";
 
@@ -30,10 +31,12 @@ function mapQuality(quality: ProviderGenerateInput["quality"]): "medium" | "high
 }
 
 /**
- * OpenAI (gpt-image-1) backed provider. Requires IMAGE_API_KEY. The images
- * endpoint enforces OpenAI's own mandatory content-safety restrictions on
- * top of this app's pre-filter — we surface a clean error when it declines
- * a prompt rather than attempting to route around it.
+ * OpenAI (gpt-image-1) backed provider. Requires IMAGE_API_KEY. Uses the
+ * generations endpoint by default, or the edits endpoint when a
+ * `sourceImage` is supplied. Both endpoints enforce OpenAI's own mandatory
+ * content-safety restrictions on top of this app's pre-filter — we surface
+ * a clean error when it declines a prompt rather than attempting to route
+ * around it.
  */
 export class OpenAiImageProvider implements ImageProvider {
   readonly id = "openai";
@@ -46,20 +49,9 @@ export class OpenAiImageProvider implements ImageProvider {
       ? `${prompt}. Avoid the following in the image: ${input.negativePrompt}.`
       : prompt;
 
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: fullPrompt,
-        n: input.numImages,
-        size: nearestOpenAiSize(input.aspectRatio),
-        quality: mapQuality(input.quality),
-      }),
-    });
+    const response = input.sourceImage
+      ? await this.requestEdit(input, fullPrompt)
+      : await this.requestGeneration(input, fullPrompt);
 
     if (!response.ok) {
       const body = await response.json().catch(() => null);
@@ -80,6 +72,45 @@ export class OpenAiImageProvider implements ImageProvider {
         throw new ProviderError("The image provider returned an unexpected response shape.", 502);
       }
       return { url: `data:image/png;base64,${image.b64_json}`, seed: input.seed };
+    });
+  }
+
+  private requestGeneration(input: ProviderGenerateInput, prompt: string): Promise<Response> {
+    return fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt,
+        n: input.numImages,
+        size: nearestOpenAiSize(input.aspectRatio),
+        quality: mapQuality(input.quality),
+      }),
+    });
+  }
+
+  private requestEdit(input: ProviderGenerateInput, prompt: string): Promise<Response> {
+    const parsed = parseImageDataUrl(input.sourceImage!);
+    if (!parsed) {
+      throw new ProviderError("The uploaded image could not be read.", 400);
+    }
+
+    const imageBlob = new Blob([Buffer.from(parsed.base64, "base64")], { type: parsed.mimeType });
+    const form = new FormData();
+    form.set("model", "gpt-image-1");
+    form.set("prompt", prompt);
+    form.set("n", String(input.numImages));
+    form.set("size", nearestOpenAiSize(input.aspectRatio));
+    form.set("quality", mapQuality(input.quality));
+    form.set("image", imageBlob, "source.png");
+
+    return fetch("https://api.openai.com/v1/images/edits", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${this.apiKey}` },
+      body: form,
     });
   }
 }

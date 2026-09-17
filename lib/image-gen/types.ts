@@ -34,6 +34,7 @@ export const STYLE_PRESET_LABELS: Record<StylePreset, string> = {
 export const MAX_IMAGES_PER_GENERATION = 4;
 export const MAX_PROMPT_LENGTH = 2000;
 export const MAX_NEGATIVE_PROMPT_LENGTH = 500;
+export const MAX_SOURCE_IMAGE_BYTES = 8 * 1024 * 1024;
 
 export interface GenerationSettings {
   prompt: string;
@@ -43,6 +44,8 @@ export interface GenerationSettings {
   numImages: number;
   seed?: number;
   style: StylePreset;
+  /** Optional data: URL of an uploaded image to edit instead of generating from scratch. */
+  sourceImage?: string;
 }
 
 export interface GeneratedImage {

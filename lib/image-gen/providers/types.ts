@@ -8,6 +8,8 @@ export interface ProviderGenerateInput {
   numImages: number;
   seed?: number;
   style: StylePreset;
+  /** Optional data: URL of an uploaded image to edit instead of generating from scratch. */
+  sourceImage?: string;
 }
 
 export interface ProviderGeneratedImage {
